@@ -1,26 +1,23 @@
--- loader.lua (Put this inside your public GitHub repository)
+-- loader.lua
 
--- 1. Verify that the user actually set their license key before executing
-if not script_key or type(script_key) ~= "string" then
-    error("Obscura System: [Execution Denied] 'script_key' must be defined as a string above the loader line.")
-    return
-end
-
+-- 1. Configuration
+local script_key = script_key -- Ensure this is defined above the loader
 local HttpService = game:GetService("HttpService")
 local RbxAnalytics = game:GetService("RbxAnalyticsService")
 
--- 2. Fetch the user's current execution device hardware footprint
-local PlayerHWID = RbxAnalytics:GetClientId()
-
--- ⚠️ CONFIGURATION: Replace with your Discord bot VPS public IP address
+-- Use your active Ngrok URL
 local TargetAuthGateway = "https://snowy-railway-rearrange.ngrok-free.dev/auth"
 
+-- 2. Prepare Payload
+local PlayerHWID = RbxAnalytics:GetClientId()
 local PayloadData = {
     key = script_key,
     hwid = PlayerHWID
 }
 
--- 🌐 3. Perform the secure handshake check with your bot's live database
+print("Obscura: Attempting to connect to Gateway...")
+
+-- 3. Perform Handshake
 local Success, ServerResponse = pcall(function()
     return HttpService:PostAsync(
         TargetAuthGateway, 
@@ -29,14 +26,24 @@ local Success, ServerResponse = pcall(function()
     )
 end)
 
+-- 4. Process Response
 if Success and ServerResponse then
-    -- 4. If the key is valid and not blacklisted, run the code returned by the server
-    local Executable, RuntimeErrors = loadstring(ServerResponse)
-    if Executable then
-        assert(Executable)()
+    print("Obscura: Handshake Successful!")
+    
+    -- Check if the server returned an error string instead of code
+    if string.sub(ServerResponse, 1, 5) == "error" then
+        warn("Obscura System: Server Rejected Key -> " .. ServerResponse)
     else
-        error("Obscura System: [Internal Stream Error] Failed to parse script data -> " .. tostring(RuntimeErrors))
+        -- Attempt to execute the returned code
+        local Executable, RuntimeErrors = loadstring(ServerResponse)
+        if Executable then
+            print("Obscura: Executing payload...")
+            assert(Executable)()
+        else
+            warn("Obscura System: Failed to parse script -> " .. tostring(RuntimeErrors))
+        end
     end
 else
-    error("Obscura System: [Access Revoked] Verification failed. Invalid or blacklisted license key.")
+    -- If Success is false, print the error to F9 console
+    warn("Obscura System: Connection failed! Error: " .. tostring(ServerResponse))
 end
