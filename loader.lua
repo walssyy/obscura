@@ -13,7 +13,7 @@ local RbxAnalytics = game:GetService("RbxAnalyticsService")
 local PlayerHWID = RbxAnalytics:GetClientId()
 
 -- ⚠️ CONFIGURATION: Replace with your Discord bot VPS public IP address
-local TargetAuthGateway = "http://93.86.237.41:3000/auth"
+local TargetAuthGateway = "https://snowy-railway-rearrange.ngrok-free.dev/auth"
 
 local PayloadData = {
     key = script_key,
