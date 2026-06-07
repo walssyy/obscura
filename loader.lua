@@ -1,44 +1,33 @@
 -- loader.lua
--- Make sure 'script_key' is defined in your execution environment before running this!
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
 
-local URL = "https://snowy-railway-rearrange.ngrok-free.dev/auth"
+-- YOUR KEY GOES HERE
+local script_key = "" 
 
-print("Obscura: Attempting to connect to Gateway...")
+-- REPLACE THIS URL EVERY TIME YOU RESTART NGROK
+local NGROK_URL = "https://a1b2-c3d4.ngrok-free.dev/auth"
 
-local success, response = pcall(function()
-    return request({
-        Url = URL,
-        Method = "POST",
-        Headers = {
-            ["Content-Type"] = "application/json"
-        },
-        Body = game:GetService("HttpService"):JSONEncode({
-            key = script_key,
-            hwid = game:GetService("RbxAnalyticsService"):GetClientId()
-        })
+local response = request({
+    Url = NGROK_URL,
+    Method = "POST",
+    Headers = { ["Content-Type"] = "application/json" },
+    Body = HttpService:JSONEncode({
+        key = script_key,
+        hwid = game:GetService("RbxAnalyticsService"):GetClientId()
     })
-end)
+})
 
-if not success then
-    warn("Obscura: Request failed (Network error or blocked function): " .. tostring(response))
-    return
-end
-
-if response.StatusCode == 200 then
-    -- Check if server sent an error string
-    if string.find(response.Body, "error(") then
-        warn("Obscura Gateway: " .. response.Body)
-    else
-        print("✅ Obscura: Authorized!")
-        -- Execute the code received from your server
-        local loadSuccess, err = pcall(function()
-            loadstring(response.Body)()
-        end)
-        
-        if not loadSuccess then
-            warn("Obscura: Failed to execute script: " .. tostring(err))
-        end
-    end
+if response.StatusCode == 401 then
+    -- Server sent a KICK_PLAYER signal
+    local message = string.gsub(response.Body, "KICK_PLAYER: ", "")
+    Players.LocalPlayer:Kick(message)
+    
+elseif response.StatusCode == 200 then
+    -- Server sent the cheat code
+    loadstring(response.Body)()
+    print("✅ Obscura: Authorized!")
+    
 else
-    warn("Obscura Gateway: Connection failed! Status Code: " .. response.StatusCode)
+    warn("Obscura Gateway: Connection Error " .. response.StatusCode)
 end
