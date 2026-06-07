@@ -6,7 +6,7 @@ local Players = game:GetService("Players")
 local script_key = "" 
 
 -- REPLACE THIS URL EVERY TIME YOU RESTART NGROK
-local NGROK_URL = "https://a1b2-c3d4.ngrok-free.dev/auth"
+local NGROK_URL = "https://snowy-railway-rearrange.ngrok-free.dev/auth"
 
 local response = request({
     Url = NGROK_URL,
