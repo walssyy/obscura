@@ -1,49 +1,34 @@
 -- loader.lua
-
--- 1. Configuration
-local script_key = script_key -- Ensure this is defined above the loader
-local HttpService = game:GetService("HttpService")
-local RbxAnalytics = game:GetService("RbxAnalyticsService")
-
--- Use your active Ngrok URL
-local TargetAuthGateway = "https://snowy-railway-rearrange.ngrok-free.dev/auth"
-
--- 2. Prepare Payload
-local PlayerHWID = RbxAnalytics:GetClientId()
-local PayloadData = {
-    key = script_key,
-    hwid = PlayerHWID
-}
+-- Ensure script_key is defined before running this
+if not script_key then
+    warn("Obscura System: script_key not defined!")
+    return
+end
 
 print("Obscura: Attempting to connect to Gateway...")
 
--- 3. Perform Handshake
-local Success, ServerResponse = pcall(function()
-    return HttpService:PostAsync(
-        TargetAuthGateway, 
-        HttpService:JSONEncode(PayloadData), 
-        Enum.HttpContentType.ApplicationJson
-    )
-end)
+-- Use the executor's 'request' function to bypass client-side blocks
+local response = request({
+    Url = "https://your-ngrok-url-here.ngrok-free.dev/auth", -- REPLACE THIS WITH YOUR ACTUAL NGROK URL
+    Method = "POST",
+    Headers = {
+        ["Content-Type"] = "application/json"
+    },
+    Body = game:GetService("HttpService"):JSONEncode({
+        key = script_key,
+        hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+    })
+})
 
--- 4. Process Response
-if Success and ServerResponse then
-    print("Obscura: Handshake Successful!")
-    
-    -- Check if the server returned an error string instead of code
-    if string.sub(ServerResponse, 1, 5) == "error" then
-        warn("Obscura System: Server Rejected Key -> " .. ServerResponse)
+if response.StatusCode == 200 then
+    -- Check if the server returned an error string or the actual script
+    if string.find(response.Body, "error(") then
+        warn("Obscura System: " .. response.Body)
     else
-        -- Attempt to execute the returned code
-        local Executable, RuntimeErrors = loadstring(ServerResponse)
-        if Executable then
-            print("Obscura: Executing payload...")
-            assert(Executable)()
-        else
-            warn("Obscura System: Failed to parse script -> " .. tostring(RuntimeErrors))
-        end
+        print("✅ Obscura: Authorized!")
+        print("✅ Premium script loaded successfully!")
+        loadstring(response.Body)()
     end
 else
-    -- If Success is false, print the error to F9 console
-    warn("Obscura System: Connection failed! Error: " .. tostring(ServerResponse))
+    warn("Obscura System: Connection failed! Status Code: " .. response.StatusCode)
 end
