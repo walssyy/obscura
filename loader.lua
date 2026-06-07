@@ -1,13 +1,32 @@
--- loader.lua (Simple version)
-local SCRIPT_URL = "https://raw.githubusercontent.com/YOUR_GITHUB_USER/YOUR_REPO/main/premium_source.lua"
+-- loader.lua (The Authentication Version)
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
 
-local success, response = pcall(function()
-    return game:HttpGet(SCRIPT_URL)
-end)
+-- YOUR KEY GOES HERE
+local script_key = "YOUR_KEY_HERE" 
 
-if success and response then
-    loadstring(response)()
-    print("✅ Obscura Loaded Successfully!")
+-- Update this to your current Ngrok URL every time you restart Ngrok
+local NGROK_URL = "https://snowy-railway-rearrange.ngrok-free.dev/auth"
+
+local response = request({
+    Url = NGROK_URL,
+    Method = "POST",
+    Headers = { ["Content-Type"] = "application/json" },
+    Body = HttpService:JSONEncode({
+        key = script_key,
+        hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+    })
+})
+
+if response.StatusCode == 401 then
+    -- Server rejected the key/HWID
+    local message = string.gsub(response.Body, "KICK_PLAYER: ", "")
+    Players.LocalPlayer:Kick(message)
+    
+elseif response.StatusCode == 200 then
+    -- Server accepted and sent the script
+    loadstring(response.Body)()
+    print("✅ Obscura: Authorized!")
 else
-    warn("❌ Failed to load script: " .. tostring(response))
+    warn("Obscura Gateway: Connection Error " .. response.StatusCode)
 end
