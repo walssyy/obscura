@@ -6,7 +6,7 @@ local Players = game:GetService("Players")
 local script_key = "YOUR_KEY_HERE" 
 
 -- Update this to your current Ngrok URL every time you restart Ngrok
-local NGROK_URL = "https://snowy-railway-rearrange.ngrok-free.dev/auth"
+local NGROK_URL = "perpetual-blessing-production-ec9c.up.railway.app"
 
 local response = request({
     Url = NGROK_URL,
